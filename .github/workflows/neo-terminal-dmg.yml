@@ -1,0 +1,38 @@
+name: NEO TERMINAL macOS DMG
+on:
+  push:
+    branches:
+      - neo-terminal-dmg-temporary-20261107
+    paths:
+      - 'neo-terminal-build/**'
+      - '.github/workflows/neo-terminal-dmg.yml'
+  workflow_dispatch:
+jobs:
+  build-dmg:
+    runs-on: macos-15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack NEO TERMINAL source bundle
+        shell: bash
+        run: |
+          cd neo-terminal-build
+          base64 -D -i payload.b64 -o payload.zip
+          unzip -q payload.zip
+          test -f src/main.swift
+          test -f src/index.html
+          test -f assets/icon.jpg
+      - name: Build signed universal macOS app and DMG
+        shell: bash
+        run: |
+          cd neo-terminal-build
+          bash build.command
+          ls -lh dist/NEO_TERMINAL_macOS_Universal.dmg
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: NEO_TERMINAL_macOS_Universal_DMG
+          path: neo-terminal-build/dist/NEO_TERMINAL_macOS_Universal.dmg
+          if-no-files-found: error
+          retention-days: 7
